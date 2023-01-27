@@ -1,1 +1,1 @@
-# HardwareMonitor
+# CLI app for hardware monitoring
