@@ -14,11 +14,6 @@ internal class Program
         {
             IsCpuEnabled = true,
             IsGpuEnabled = true,
-            IsMemoryEnabled = true,
-            IsMotherboardEnabled = true,
-            IsControllerEnabled = true,
-            IsNetworkEnabled = true,
-            IsStorageEnabled = true
         };
 
         computer.Open();
@@ -40,7 +35,8 @@ internal class Program
 
             foreach (ISensor sensor in hardware.Sensors)
             {
-                Console.WriteLine("\tSensor: {0}, value: {1}", sensor.Name, sensor.Value);
+                if(sensor.SensorType.ToString()=="Power" )
+                    Console.WriteLine("\tSensor: {0}, value: {1} W", sensor.Name, sensor.Value);
             }
         }
 
