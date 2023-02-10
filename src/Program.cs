@@ -1,14 +1,36 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using LibreHardwareMonitor.Hardware;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-internal class Program
+internal sealed class Program
 {
-    private static void Main(string[] args)
+    private static async Task Main(string[] args)
     {
-        Monitor();
+        await Host.CreateDefaultBuilder(args)
+            .ConfigureServices((hostContext, services) =>
+            {
+                services.AddHostedService<ConsoleHostedService>();
+            })
+            .RunConsoleAsync();
+    }
+}
+
+internal sealed class ConsoleHostedService : IHostedService
+{
+    private readonly ILogger _logger;
+    private readonly IHostApplicationLifetime _appLifetime;
+
+    public ConsoleHostedService(
+        ILogger<ConsoleHostedService> logger,
+        IHostApplicationLifetime appLifetime)
+    {
+        _logger = logger;
+        _appLifetime = appLifetime;
     }
 
-    private static void Monitor()
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
         Computer computer = new Computer
         {
@@ -17,6 +39,23 @@ internal class Program
         };
 
         computer.Open();
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            Monitor(computer);
+            await Task.Delay(1000);
+        }
+
+        computer.Close();
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    private static void Monitor(Computer computer)
+    {        
         computer.Accept(new UpdateVisitor());
 
         foreach (IHardware hardware in computer.Hardware)
@@ -35,12 +74,10 @@ internal class Program
 
             foreach (ISensor sensor in hardware.Sensors)
             {
-                if(sensor.SensorType.ToString()=="Power" )
+                if (sensor.SensorType.ToString() == "Power")
                     Console.WriteLine("\tSensor: {0}, value: {1} W", sensor.Name, sensor.Value);
             }
         }
-
-        computer.Close();
     }
 }
 
