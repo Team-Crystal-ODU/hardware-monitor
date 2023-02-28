@@ -3,9 +3,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.IO;
 
-class Ouput
+public class Output
 {
-    static void OutputDataAsJsonFile(object[] data, string fileName)
+    public static void OutputDataAsJsonFile(object[] data, string fileName)
     {
         string json=JsonSerializer.Serialize(data);
         File.WriteAllText(fileName, json);
