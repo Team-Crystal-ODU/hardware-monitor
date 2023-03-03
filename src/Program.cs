@@ -5,9 +5,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 internal sealed class Program
-{
+{ 
     private static async Task Main(string[] args)
-    {
+    {              
         await Host.CreateDefaultBuilder(args)
             .ConfigureServices((hostContext, services) =>
             {
@@ -21,7 +21,7 @@ internal sealed class ConsoleHostedService : IHostedService
 {
     private readonly ILogger _logger;
     private readonly IHostApplicationLifetime _appLifetime;
-
+    
     public ConsoleHostedService(
         ILogger<ConsoleHostedService> logger,
         IHostApplicationLifetime appLifetime)
@@ -41,8 +41,12 @@ internal sealed class ConsoleHostedService : IHostedService
         computer.Open();
 
         while (!cancellationToken.IsCancellationRequested)
-        {
-            Monitor(computer);
+        {   
+            //its ugly, but these lines create the values folder and the values.json file
+            Directory.CreateDirectory(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "values"));          
+           
+            Monitor(computer, Path.Combine(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "values"), "values.json"));
+
             await Task.Delay(1000);
         }
 
@@ -54,28 +58,67 @@ internal sealed class ConsoleHostedService : IHostedService
         return Task.CompletedTask;
     }
 
-    private static void Monitor(Computer computer)
+    private static void Monitor(Computer computer, string file)
     {        
         computer.Accept(new UpdateVisitor());
 
         foreach (IHardware hardware in computer.Hardware)
         {
-            Console.WriteLine("Hardware: {0}", hardware.Name);
+           // Console.WriteLine("Hardware: {0}", hardware.Name);
 
-            foreach (IHardware subhardware in hardware.SubHardware)
+           /* foreach (IHardware subhardware in hardware.SubHardware)
             {
                 Console.WriteLine("\tSubhardware: {0}", subhardware.Name);
 
                 foreach (ISensor sensor in subhardware.Sensors)
                 {
-                    Console.WriteLine("\t\tSensor: {0}, value: {1}", sensor.Name, sensor.Value);
+                    Console.WriteLine("Sensor: {0}, value: {1}", sensor.Name, sensor.Value);
                 }
             }
+           */
 
             foreach (ISensor sensor in hardware.Sensors)
             {
-                if (sensor.SensorType.ToString() == "Power")
-                    Console.WriteLine("\tSensor: {0}, value: {1} W", sensor.Name, sensor.Value);
+                string str = sensor.Name.Substring(0, 4);
+
+                //only grab power stats, ignore individual core temps
+                if (sensor.SensorType.ToString() == "Power" && str != "Core") 
+                { 
+                    Console.WriteLine("Sensor: {0}, value: {1} W", sensor.Name, sensor.Value);
+                    string content;
+
+                    //grab cpu wattage for json file
+                    if (sensor.Name == "Package")
+                    {
+                        content = "{\n\t\"cpu_watts\": "  + sensor.Value + ",";
+                    }
+
+                    //grab gpu wattage for json file
+                    else
+                    {
+                       content = "\t\"gpu_watts\": " + sensor.Value + "\n},";
+                    }
+
+                    //if file doesn't exist, create it
+                    if (!File.Exists(file))
+                    {
+                        using (StreamWriter writer = new StreamWriter(file))
+                        {
+                            // Write content to the file if necessary
+                            writer.WriteLine("\"data\": [");
+                            writer.WriteLine(content);
+                        }
+                    }
+
+                    //if file exists, append it
+                    else
+                    {
+                        using (StreamWriter writer = new StreamWriter(file, append: true))
+                        {
+                            writer.WriteLine(content);
+                        }
+                    }                
+                }
             }
         }
     }
