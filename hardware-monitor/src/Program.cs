@@ -93,7 +93,7 @@ internal sealed class ConsoleHostedService : IHostedService
                     //grab cpu wattage for json file
                     if (sensor.Name == "Package")
                     {                       
-                        now = (DateTimeOffset)DateTime.UtcNow;                      
+                        now = (DateTimeOffset)DateTime.UtcNow.ToLocalTime();                      
                         
                         content = "\t\"cpu_watts\": "  + sensor.Value + ",";
                         content2 = "{\n\t\"timestamp\": " + now.ToString("yyyy-MM-ddTHH:mm:ss") + ",";
