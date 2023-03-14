@@ -80,17 +80,23 @@ internal sealed class ConsoleHostedService : IHostedService
             foreach (ISensor sensor in hardware.Sensors)
             {
                 string str = sensor.Name.Substring(0, 4);
+                DateTimeOffset now;
+
+                string content;
+                string content2 = "";
 
                 //only grab power stats, ignore individual core temps
                 if (sensor.SensorType.ToString() == "Power" && str != "Core") 
                 { 
-                    Console.WriteLine("Sensor: {0}, value: {1} W", sensor.Name, sensor.Value);
-                    string content;
+                    Console.WriteLine("Sensor: {0}, value: {1} W", sensor.Name, sensor.Value);                 
 
                     //grab cpu wattage for json file
                     if (sensor.Name == "Package")
-                    {
-                        content = "{\n\t\"cpu_watts\": "  + sensor.Value + ",";
+                    {                       
+                        now = (DateTimeOffset)DateTime.UtcNow;                      
+                        
+                        content = "\t\"cpu_watts\": "  + sensor.Value + ",";
+                        content2 = "{\n\t\"timestamp\": " + now.ToString("yyyy-MM-ddTHH:mm:ss") + ",";
                     }
 
                     //grab gpu wattage for json file
@@ -99,22 +105,32 @@ internal sealed class ConsoleHostedService : IHostedService
                        content = "\t\"gpu_watts\": " + sensor.Value + "\n},";
                     }
 
-                    //if file doesn't exist, create it
+                  
+                    //if file is empty, start w/ heading
+                   // if (new FileInfo(file).Length == 0)
                     if (!File.Exists(file))
-                    {
+                    {                    
                         using (StreamWriter writer = new StreamWriter(file))
                         {
                             // Write content to the file if necessary
-                            writer.WriteLine("\"data\": [");
+                            writer.WriteLine("{\"data\": [");
+                            if (content2 != "")
+                            {
+                                writer.WriteLine(content2);
+                            }
                             writer.WriteLine(content);
                         }
                     }
 
-                    //if file exists, append it
+                    //if file has content, append it
                     else
                     {
                         using (StreamWriter writer = new StreamWriter(file, append: true))
                         {
+                            if (content2 != "")
+                            {
+                                writer.WriteLine(content2);
+                            }
                             writer.WriteLine(content);
                         }
                     }                
