@@ -10,10 +10,7 @@ using System.Text.Json.Serialization;
 using System.IO;
 using System.Timers;
 using System.Net.Http.Json;
-
-
-
-
+using System.Net.Http.Headers;
 
 internal sealed class Program
 { 
@@ -74,10 +71,9 @@ internal sealed class ConsoleHostedService : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
+       
         return Task.CompletedTask;
     }
-
-
 
     public static void Monitor(Computer computer, string file)
     {
@@ -221,6 +217,35 @@ internal sealed class ConsoleHostedService : IHostedService
     }
     private static void OnTimedEvent(string file, System.Timers.Timer timer)
     {
+        //make HTTP POST
+        var httpClient = new HttpClient();
+
+        // Set the URL for the request
+        httpClient.BaseAddress = new Uri("https://httpbin.org/post");
+
+        // Set the headers
+        httpClient.DefaultRequestHeaders.Accept.Clear();
+        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        // Read the JSON file into a string
+        var filePath = Path.Combine(Path.Combine(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "values"), "values.json"));
+        var json = File.ReadAllText(filePath);
+
+        // Set the JSON data as the request body
+        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        // Perform the request
+        var response = httpClient.PostAsync("", content).Result;
+
+        if (response.IsSuccessStatusCode)
+        {
+            Console.WriteLine("POST request succeeded");
+        }
+        else
+        {
+            Console.WriteLine("POST request failed with status code " + response.StatusCode);
+        }
+
         Console.WriteLine("Deleting file at " + DateTime.Now); // Debug statement
 
         // Check if the file exists and is too old
