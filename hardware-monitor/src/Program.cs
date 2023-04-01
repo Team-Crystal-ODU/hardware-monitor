@@ -102,6 +102,8 @@ internal sealed class ConsoleHostedService : IHostedService
                 string str = sensor.Name.Substring(0, 4);
                 DateTimeOffset now;
 
+                //variable to see if gpu has been populated yet to see whether or not to push the json object to the API
+                Boolean gpuGathered;
 
 
                 //creating JSON object to store data in
@@ -115,59 +117,33 @@ internal sealed class ConsoleHostedService : IHostedService
                 if (sensor.SensorType.ToString() == "Power" && str != "Core")
                 {
                     Console.WriteLine("Sensor: {0}, value: {1} W", sensor.Name, sensor.Value);
+                    
 
-                    //grab cpu wattage for json file
+                    //grab cpu wattage for json 
                     if (sensor.Name == "Package")
                     {
                         dataObject.timestamp=DateTimeOffset.UtcNow.ToLocalTime(); 
                         dataObject.cpu_watts=sensor.Value;
+                        gpuGathered = false;
 
-                        //now = (DateTimeOffset)DateTime.UtcNow.ToLocalTime();
-                        //dataObject.timestamp = now.ToString("yyyy-MM-ddTHH:mm:ss");
-
-
-
-
-                        //creating json object to turn into json data later
-                        /*content = new
-                        {
-                            timestamp = now.ToString("yyyy-MM-ddTHH:mm:ss"),
-                            cpu_watts = sensor.Value,
-                            gpu_watts = 0
-                        };*/
                     }
+                    //grab gpu wattage for json
                     else
                     {
                         dataObject.gpu_watts=sensor.Value;
+                        gpuGathered=true;   
                     }
 
-                    //grab gpu wattage for json file
-
-                    
-                    /*else 
-                    {
-                        if (content != null)
-                        {
-                            var obj = (JObject)JToken.FromObject(content);
-                            obj.Add("gpu_watts", sensor.Value);
-                            content = obj;
-                        }
-                        //content = "\t\"gpu_watts\": " + sensor.Value + "\n},";
-
-                        //creating json object to turn into json data later
-                        //content = new
-                       // {
-                        //    gpu_watts = sensor.Value
-                       // };
-                    }*/
 
 
-                    
+
 
                     //Creating POST Request to API to send GPU and CPU wattage data 
-                    var httpWebRequest = (HttpWebRequest)WebRequest.Create("http://172.18.12.16:6000/hardware");
-                    httpWebRequest.ContentType = "application/json";
-                    httpWebRequest.Method = "POST";
+                    if(gpuGathered)
+                    {
+                        var httpWebRequest = (HttpWebRequest)WebRequest.Create("http://172.18.12.16:6000/hardware");
+                        httpWebRequest.ContentType = "application/json";
+                        httpWebRequest.Method = "POST";
 
                         using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
                         {
@@ -182,6 +158,7 @@ internal sealed class ConsoleHostedService : IHostedService
                             var result = streamReader.ReadToEnd();
                             Console.WriteLine(result);
                         }
+                    }
 
                 }
             }
