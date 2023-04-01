@@ -70,12 +70,25 @@ internal sealed class ConsoleHostedService : IHostedService
         return Task.CompletedTask;
     }
 
+
+    //Class to establish editable object is available for power data
+    public class PowerData
+    {
+        public DateTimeOffset timestamp { get; set; }
+        public float? cpu_watts { get; set; }
+        public float? gpu_watts { get; set; }
+    }
     public static void Monitor(Computer computer, string file)
     {
 
 
         computer.Accept(new UpdateVisitor());
 
+
+        //creating object of powerdata class to assign values 
+        PowerData dataObject = new PowerData();
+
+   
 
 
         foreach (IHardware hardware in computer.Hardware)
@@ -92,7 +105,7 @@ internal sealed class ConsoleHostedService : IHostedService
 
 
                 //creating JSON object to store data in
-                object content = null;
+                //object content = null;
 
 
 
@@ -106,42 +119,59 @@ internal sealed class ConsoleHostedService : IHostedService
                     //grab cpu wattage for json file
                     if (sensor.Name == "Package")
                     {
-                        now = (DateTimeOffset)DateTime.UtcNow.ToLocalTime();
+                        dataObject.timestamp=DateTimeOffset.UtcNow.ToLocalTime(); 
+                        dataObject.cpu_watts=sensor.Value;
 
-                        
+                        //now = (DateTimeOffset)DateTime.UtcNow.ToLocalTime();
+                        //dataObject.timestamp = now.ToString("yyyy-MM-ddTHH:mm:ss");
+
+
+
 
                         //creating json object to turn into json data later
-                        content = new
+                        /*content = new
                         {
                             timestamp = now.ToString("yyyy-MM-ddTHH:mm:ss"),
-                            cpu_watts = sensor.Value
-                        };
+                            cpu_watts = sensor.Value,
+                            gpu_watts = 0
+                        };*/
+                    }
+                    else
+                    {
+                        dataObject.gpu_watts=sensor.Value;
                     }
 
                     //grab gpu wattage for json file
-                    else
+
+                    
+                    /*else 
                     {
+                        if (content != null)
+                        {
+                            var obj = (JObject)JToken.FromObject(content);
+                            obj.Add("gpu_watts", sensor.Value);
+                            content = obj;
+                        }
                         //content = "\t\"gpu_watts\": " + sensor.Value + "\n},";
 
                         //creating json object to turn into json data later
-                        content = new
-                        {
-                            gpu_watts = sensor.Value
-                        };
-                    }
+                        //content = new
+                       // {
+                        //    gpu_watts = sensor.Value
+                       // };
+                    }*/
 
 
-
+                    
 
                     //Creating POST Request to API to send GPU and CPU wattage data 
                     var httpWebRequest = (HttpWebRequest)WebRequest.Create("http://172.18.12.16:6000/hardware");
                     httpWebRequest.ContentType = "application/json";
                     httpWebRequest.Method = "POST";
-                    if (content != null)
-                    {
+
                         using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
                         {
-                            string jsonContent = JsonSerializer.Serialize(content);
+                            string jsonContent = JsonSerializer.Serialize(dataObject);
                             streamWriter.Write(jsonContent);
 
                         }
@@ -152,7 +182,6 @@ internal sealed class ConsoleHostedService : IHostedService
                             var result = streamReader.ReadToEnd();
                             Console.WriteLine(result);
                         }
-                    }
 
                 }
             }
