@@ -66,10 +66,9 @@ internal sealed class ConsoleHostedService : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
+       
         return Task.CompletedTask;
     }
-
-
 
     public static void Monitor(Computer computer, string file)
     {
