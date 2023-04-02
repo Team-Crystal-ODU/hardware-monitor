@@ -56,7 +56,7 @@ internal sealed class ConsoleHostedService : IHostedService
             //its ugly, but these lines create the values folder and the values.json file
             Directory.CreateDirectory(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "values"));
 
-            Monitor(computer, Path.Combine(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "values"), "values.json"));
+            Monitor(computer);
 
             await Task.Delay(5000);
         }
@@ -65,8 +65,7 @@ internal sealed class ConsoleHostedService : IHostedService
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
-    {
-       
+    {      
         return Task.CompletedTask;
     }
 
@@ -78,24 +77,16 @@ internal sealed class ConsoleHostedService : IHostedService
         public float? cpu_watts { get; set; }
         public float? gpu_watts { get; set; }
     }
-    public static void Monitor(Computer computer, string file)
+    public static void Monitor(Computer computer)
     {
 
-
         computer.Accept(new UpdateVisitor());
-
 
         //creating object of powerdata class to assign values 
         PowerData dataObject = new PowerData();
 
-   
-
-
         foreach (IHardware hardware in computer.Hardware)
         {
-
-
-
 
             foreach (ISensor sensor in hardware.Sensors)
             {
@@ -104,13 +95,7 @@ internal sealed class ConsoleHostedService : IHostedService
 
                 //variable to see if gpu has been populated yet to see whether or not to push the json object to the API
                 Boolean gpuGathered;
-
-
-                //creating JSON object to store data in
-                //object content = null;
-
-
-
+            
 
                 //only grab power stats, ignore individual core temps
 
@@ -135,9 +120,6 @@ internal sealed class ConsoleHostedService : IHostedService
                     }
 
 
-
-
-
                     //Creating POST Request to API to send GPU and CPU wattage data 
                     if(gpuGathered)
                     {
@@ -159,11 +141,9 @@ internal sealed class ConsoleHostedService : IHostedService
                             Console.WriteLine(result);
                         }
                     }
-
                 }
             }
-        }
-        
+        }       
     }
 
 
