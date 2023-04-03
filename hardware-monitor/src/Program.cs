@@ -53,8 +53,6 @@ internal sealed class ConsoleHostedService : IHostedService
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            //its ugly, but these lines create the values folder and the values.json file
-            Directory.CreateDirectory(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "values"));
 
             Monitor(computer);
 
