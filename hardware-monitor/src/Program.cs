@@ -71,7 +71,7 @@ internal sealed class ConsoleHostedService : IHostedService
     //Class to establish editable object is available for power data
     public class PowerData
     {
-        public DateTimeOffset timestamp { get; set; }
+        public string? timestamp { get; set; }
         public float? cpu_watts { get; set; }
         public float? gpu_watts { get; set; }
     }
@@ -105,7 +105,7 @@ internal sealed class ConsoleHostedService : IHostedService
                     //grab cpu wattage for json 
                     if (sensor.Name == "Package")
                     {
-                        dataObject.timestamp=DateTimeOffset.UtcNow.ToLocalTime(); 
+                        dataObject.timestamp=DateTimeOffset.UtcNow.ToLocalTime().ToString("yyyy-MM-ddTHH:mm:ss"); 
                         dataObject.cpu_watts=sensor.Value;
                         gpuGathered = false;
 
