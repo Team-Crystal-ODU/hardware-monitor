@@ -121,7 +121,7 @@ internal sealed class ConsoleHostedService : IHostedService
                     //Creating POST Request to API to send GPU and CPU wattage data 
                     if(gpuGathered)
                     {
-                        var httpWebRequest = (HttpWebRequest)WebRequest.Create("http://172.18.12.16:6000/hardware");
+                        var httpWebRequest = (HttpWebRequest)WebRequest.Create("http://172.18.12.16:6000/hardware?user=BradandHawar");
                         httpWebRequest.ContentType = "application/json";
                         httpWebRequest.Method = "POST";
 
