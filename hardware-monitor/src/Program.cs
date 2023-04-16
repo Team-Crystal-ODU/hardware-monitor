@@ -72,8 +72,18 @@ internal sealed class ConsoleHostedService : IHostedService
     public class PowerData
     {
         public string? timestamp { get; set; }
-        public float? cpu_watts { get; set; }
-        public float? gpu_watts { get; set; }
+        public WattData? watts { get; set; }
+        public PowerData()
+        {
+            watts = new WattData();
+           
+        }
+    }
+
+    public class WattData
+    {
+        public float? gpu_watts { get; set; } 
+        public float? cpu_watts { get; set; } 
     }
     public static void Monitor(Computer computer)
     {
@@ -82,6 +92,7 @@ internal sealed class ConsoleHostedService : IHostedService
 
         //creating object of powerdata class to assign values 
         PowerData dataObject = new PowerData();
+       
 
         foreach (IHardware hardware in computer.Hardware)
         {
@@ -106,14 +117,14 @@ internal sealed class ConsoleHostedService : IHostedService
                     if (sensor.Name == "Package")
                     {
                         dataObject.timestamp=DateTimeOffset.UtcNow.ToLocalTime().ToString("yyyy-MM-ddTHH:mm:ss"); 
-                        dataObject.cpu_watts=sensor.Value;
+                        dataObject.watts.cpu_watts=sensor.Value;
                         gpuGathered = false;
 
                     }
                     //grab gpu wattage for json
                     else
                     {
-                        dataObject.gpu_watts=sensor.Value;
+                        dataObject.watts.gpu_watts=sensor.Value;
                         gpuGathered=true;   
                     }
 
@@ -128,6 +139,7 @@ internal sealed class ConsoleHostedService : IHostedService
                         using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
                         {
                             string jsonContent = JsonSerializer.Serialize(dataObject);
+
                             streamWriter.Write(jsonContent);
 
                         }
