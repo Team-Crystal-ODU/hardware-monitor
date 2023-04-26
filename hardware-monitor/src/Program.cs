@@ -99,13 +99,11 @@ internal sealed class ConsoleHostedService : IHostedService
 
             foreach (ISensor sensor in hardware.Sensors)
             {
-                string str = sensor.Name.Substring(0, 4);
-                DateTimeOffset now;
+                string str = sensor.Name.Substring(0, 4);                
 
                 //variable to see if gpu has been populated yet to see whether or not to push the json object to the API
                 Boolean gpuGathered;
             
-
                 //only grab power stats, ignore individual core temps
 
                 if (sensor.SensorType.ToString() == "Power" && str != "Core")
